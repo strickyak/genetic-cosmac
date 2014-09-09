@@ -160,15 +160,18 @@ func (p *Mach) Step() bool {
 	case 5: // STR
 		p.Mem[p.Reg[n]%SZ] = p.D
 	case 6: // I/O
+    // Special case 0x68:
 		if n == 8 {
-			return false // The spare opcode 0x68 becomes WAIT (rather than opcode 0)
+			return false // The spare opcode 0x68 becomes IDL/STOP (rather than opcode 0)
 		}
+    // Special case 0x60:
 		if n == 0 {
 			p.Reg[p.X]++ // IRX
 		}
+    // Inputs and Outputs
 		if n < 8 {
 			p.Out[n] = p.D // OUT n&7
-			println("OUT", n, p.D)
+			// println("OUT", n, p.D)
 		} else {
 			p.D = p.In[(n & 7)] // IN n&7
 		}
