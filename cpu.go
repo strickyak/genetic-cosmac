@@ -95,6 +95,14 @@ func (p *Mach) imm() byte {
 	return p.Mem[p.Reg[p.P]%SZ]
 }
 
+func (p *Mach) shortBranch(cond bool) {
+	p.Reg[p.P]++
+	if cond {
+		p.Reg[p.P] = (p.Reg[p.P] & 0xFF00) | uint16(p.Mem[p.Reg[p.P]%SZ])
+		p.Reg[p.P]-- // Because it will be ++ at bottom of Step().
+	}
+}
+
 // Step returns false if IDLE instruction, else true.
 func (p *Mach) Step() bool {
 	instr := p.Mem[p.Reg[p.P]%SZ]
@@ -111,6 +119,41 @@ func (p *Mach) Step() bool {
 	case 2: // DEC rn
 		p.Reg[n]--
 	case 3: // BR...
+		switch n {
+		case 0:
+			p.shortBranch(true)
+		case 1:
+			p.shortBranch(!p.Q)
+		case 2:
+			p.shortBranch(p.D == 0)
+		case 3:
+			p.shortBranch(p.DF)
+		case 4:
+			p.shortBranch(16 == 16&(p.EF<<1))
+		case 5:
+			p.shortBranch(16 == 16&(p.EF<<2))
+		case 6:
+			p.shortBranch(16 == 16&(p.EF<<3))
+		case 7:
+			p.shortBranch(16 == 16&(p.EF<<4))
+
+		case 8:
+			p.shortBranch(false)
+		case 9:
+			p.shortBranch(p.Q)
+		case 10:
+			p.shortBranch(p.D != 0)
+		case 11:
+			p.shortBranch(!p.DF)
+		case 12:
+			p.shortBranch(0 == 16&(p.EF<<1))
+		case 13:
+			p.shortBranch(0 == 16&(p.EF<<2))
+		case 14:
+			p.shortBranch(0 == 16&(p.EF<<3))
+		case 15:
+			p.shortBranch(0 == 16&(p.EF<<4))
+		}
 	case 4: // LDA
 		p.D = p.Mem[p.Reg[n]%SZ]
 		p.Reg[n]++

@@ -22,15 +22,30 @@ func (pw *ProductWorld) Fitness(sim *Sim) float64 {
 	return z
 }
 
-func Run() {
+func Run1(ch chan float64) {
 	w := new(ProductWorld)
-	for gen := 0; ; gen++ {
-		code := make([]byte, 64)
-		rand.Read(code)
-		sim, ok := RunSimulation(code, w)
-		fit := w.Fitness(sim)
-		if fit > 0.0 {
-			fmt.Printf("%d\t%v\t%d\t%30.0f\n", gen, ok, sim.Time, fit)
+	code := make([]byte, 64)
+	rand.Read(code)
+	sim, ok := RunSimulation(code, w)
+	fit := w.Fitness(sim)
+	if fit > 0.0 {
+		fmt.Printf("%v\t%d\t%30.0f\n", ok, sim.Time, fit)
+	}
+
+	ch <- fit
+}
+func RunN(n int) float64 {
+	ch := make(chan float64)
+	var z float64
+	for i := 0; i < n; i++ {
+		go Run1(ch)
+	}
+	for i := 0; i < n; i++ {
+		fit := <-ch
+		fmt.Printf("FIT %30.0f\n", fit)
+		if z < fit {
+			z = fit // Maximum.
 		}
 	}
+	return z
 }
