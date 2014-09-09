@@ -1,11 +1,16 @@
+/*
+  Emulator for subset of RCA 1802 Cosmac CPU, for genetic programming.
+*/
 package genetic
+
+// TODO:  Fix subtration and DF borrowing.  I'm sure it's wrong.
 
 const SZ = 256
 const STEPS_PER_TICK = 16
 const TICKS_PER_TOCK = 16
 const MAX_TIME = 50000
 
-// Sim is the simulator.
+// Sim is the simulator for a Machine in a World.
 type Sim struct {
 	// For Simulation:
 	Time  uint64
@@ -58,11 +63,11 @@ func NewMachine(code []byte) *Mach {
 // Mach is the Machine State.
 type Mach struct {
 	// Registers
-	Mem       [SZ]byte   // Memory
-	Reg       [16]uint16 // Wide Registers
-	D         byte       // Accumulator
-	X, P      byte       // Nybble pointer to Reg
-	DF, IE, Z bool       // Status bits
+	Mem  [SZ]byte   // Memory
+	Reg  [16]uint16 // Wide Registers
+	D    byte       // Accumulator
+	X, P byte       // Nybble pointer to Reg
+	DF   bool       // Status bits
 
 	// Outputs.
 	Q   bool    // Q output bit.
