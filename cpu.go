@@ -8,39 +8,45 @@ const MAX_TIME = 50000
 // Sim is the simulator.
 type Sim struct {
 	// For Simulation:
-	Time         uint64
+	Time  uint64
 	Ticks uint64
 	Tocks uint64
-  M *Mach
-	W            World  // The world of the simulator
+	M     *Mach
+	W     World // The world of the simulator
 }
 
 func RunSimulation(code []byte, w World) (*Sim, bool) {
-  m := NewMachine(code)
-  sim := &Sim{
-    M: m,
-    W: w,
-  }
+	m := NewMachine(code)
+	sim := &Sim{
+		M: m,
+		W: w,
+	}
 
-  for sim.Time = 1; sim.Time <= MAX_TIME; sim.Time++ {
-    ok := m.Step()
-    if !ok {return sim, false}
-    if sim.Time % STEPS_PER_TICK == 0 {
-      ok = w.Tick(sim)
-      if !ok {return sim, false}
-      if sim.Time % (STEPS_PER_TICK * TICKS_PER_TOCK) == 0 {
-        ok = w.Tock(sim)
-        if !ok {return sim, false}
-      }
-    }
-  }
-  return sim, true
+	for sim.Time = 1; sim.Time <= MAX_TIME; sim.Time++ {
+		ok := m.Step()
+		if !ok {
+			return sim, false
+		}
+		if sim.Time%STEPS_PER_TICK == 0 {
+			ok = w.Tick(sim)
+			if !ok {
+				return sim, false
+			}
+			if sim.Time%(STEPS_PER_TICK*TICKS_PER_TOCK) == 0 {
+				ok = w.Tock(sim)
+				if !ok {
+					return sim, false
+				}
+			}
+		}
+	}
+	return sim, true
 }
 
 type World interface {
 	Tick(sim *Sim) bool
 	Tock(sim *Sim) bool
-  Fitness(sim *Sim) float64
+	Fitness(sim *Sim) float64
 }
 
 func NewMachine(code []byte) *Mach {
@@ -52,11 +58,11 @@ func NewMachine(code []byte) *Mach {
 // Mach is the Machine State.
 type Mach struct {
 	// Registers
-	Mem             [SZ]byte // Memory
-	Reg             [16]uint16   // Wide Registers
-	D               byte         // Accumulator
-	X, P            byte         // Nybble pointer to Reg
-	DF, IE, Z       bool         // Status bits
+	Mem       [SZ]byte   // Memory
+	Reg       [16]uint16 // Wide Registers
+	D         byte       // Accumulator
+	X, P      byte       // Nybble pointer to Reg
+	DF, IE, Z bool       // Status bits
 
 	// Outputs.
 	Q   bool    // Q output bit.
@@ -81,7 +87,7 @@ func (p *Mach) dfInt() int {
 }
 func (p *Mach) imm() byte {
 	p.Reg[p.P]++
-	return p.Mem[p.Reg[p.P] % SZ]
+	return p.Mem[p.Reg[p.P]%SZ]
 }
 
 // Step returns false if IDLE instruction, else true.
@@ -91,7 +97,7 @@ func (p *Mach) Step() bool {
 	switch i {
 	case 0: // LDN, but IDL if N==0
 		if n == 0 {
-      // NOP -- we have moved WAIT to 0x68.
+			// NOP -- we have moved WAIT to 0x68.
 		} else {
 			p.D = p.Mem[p.Reg[n]%SZ]
 		}
@@ -107,14 +113,14 @@ func (p *Mach) Step() bool {
 		p.Mem[p.Reg[n]%SZ] = p.D
 	case 6: // I/O
 		if n == 8 {
-      return false  // The spare opcode 0x68 becomes WAIT (rather than opcode 0)
+			return false // The spare opcode 0x68 becomes WAIT (rather than opcode 0)
 		}
 		if n == 0 {
 			p.Reg[p.X]++ // IRX
 		}
 		if n < 8 {
 			p.Out[n] = p.D // OUT n&7
-      println("OUT", n, p.D)
+			println("OUT", n, p.D)
 		} else {
 			p.D = p.In[(n & 7)] // IN n&7
 		}
@@ -234,5 +240,5 @@ func (p *Mach) Step() bool {
 		}
 	}
 	p.Reg[p.P]++
-  return true
+	return true
 }
